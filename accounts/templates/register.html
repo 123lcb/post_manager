@@ -1,0 +1,232 @@
+<!--<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+</body>
+</html> -->
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .register-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #4cae4c;
+        }
+        a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>注册</h2>
+        {% if messages %}
+            <div class="message">
+                {% for message in messages %}
+                    <p{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <label for="username">用户名:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="email">邮箱:</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="email" id="email" name="email" required style="flex: 1;">
+                <button type="button" id="send-code-btn" style="padding: 10px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">发送验证码</button>
+            </div>
+            <label for="verification_code">邮箱验证码:</label>
+            <input type="text" id="verification_code" name="verification_code" required>
+            <label for="password1">密码:</label>
+            <input type="password" id="password1" name="password1" required>
+            <div id="password-feedback"></div>
+            <label for="password2">确认密码:</label>
+            <input type="password" id="password2" name="password2" required>
+            <label for="image_code">验证码:</label>
+            <input type="text" name="image_code" id="image_code" required>
+            <img src="{% url 'image_code' %}" alt="验证码" onclick="this.src='{% url 'image_code' %}?'+Math.random();">
+            <input type="submit" value="注册">
+        </form>
+        <p>已有账户? <a href="{% url 'login' %}">在此登录</a></p>
+    </div>
+</body>
+</html>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var passwordInput = document.getElementById('password1');
+        var passwordFeedback = document.getElementById('password-feedback');
+    
+        passwordInput.addEventListener('input', function() {
+            var password = passwordInput.value;
+            var errors = [];
+            if (password.length < 8) {
+                errors.push('密码必须至少8个字符长。');
+            }
+            if (!/[A-Z]/.test(password)) {
+                errors.push('密码必须包含至少一个大写字母。');
+            }
+            if (!/[a-z]/.test(password)) {
+                errors.push('密码必须包含至少一个小写字母。');
+            }
+            if (!/\d/.test(password)) {
+                errors.push('密码必须包含至少一个数字。');
+            }
+            if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                errors.push('密码必须包含至少一个特殊字符。');
+            }
+    
+            // 清除之前的反馈
+            passwordFeedback.innerHTML = '';
+    
+            // 显示新的反馈
+            if (errors.length > 0) {
+                errors.forEach(function(error) {
+                    var p = document.createElement('p');
+                    p.style.color = 'red';
+                    p.textContent = error;
+                    passwordFeedback.appendChild(p);
+                });
+            } else {
+                var p = document.createElement('p');
+                p.style.color = 'green';
+                p.textContent = '密码强度高。';
+                passwordFeedback.appendChild(p);
+            }
+        });
+    });
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sendBtn = document.getElementById('send-code-btn');
+        const emailInput = document.getElementById('email');
+        
+        sendBtn.addEventListener('click', function() {
+            const email = emailInput.value;
+            if (!email) {
+                alert('请输入邮箱地址');
+                return;
+            }
+
+            // 禁用按钮并开始倒计时
+            let countdown = 60;
+            sendBtn.disabled = true;
+            sendBtn.textContent = `${countdown}秒后重试`;
+            
+            const timer = setInterval(() => {
+                countdown--;
+                sendBtn.textContent = `${countdown}秒后重试`;
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '发送验证码';
+                }
+            }, 1000);
+
+            // 发送AJAX请求
+            fetch("{% url 'send_verification_code' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: `email=${encodeURIComponent(email)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('验证码已发送到您的邮箱');
+                } else {
+                    alert(data.message || '发送验证码失败');
+                    clearInterval(timer);
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '发送验证码';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('发送验证码失败');
+                clearInterval(timer);
+                sendBtn.disabled = false;
+                sendBtn.textContent = '发送验证码';
+            });
+        });
+    });
+    </script>

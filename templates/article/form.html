@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">{{ title }}</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" id="article-form">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>错误!</strong> 请修正以下问题：
+                        <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                </div>
+
+                <!-- 富文本编辑器区域 -->
+                <div class="form-group">
+                    <div class="d-flex justify-content-between mb-2">
+                        <label for="{{ form.content.id_for_label }}">文章内容</label>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="preview-toggle">
+                                <i class="fas fa-eye"></i> 预览模式
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="edit-toggle">
+                                <i class="fas fa-edit"></i> 编辑模式
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 编辑器和预览容器 -->
+                    <div class="editor-container">
+                        <div class="editor-mode" id="editor-area">
+                            {{ form.content }}
+                        </div>
+                        <div class="preview-mode" id="preview-area" style="display: none;">
+                            <div class="preview-content card p-3" style="min-height: 400px; background-color: #f8f9fa;">
+                                <!-- 预览内容将在这里渲染 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'article_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回列表
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 保存文章
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media }}  <!-- 引入TinyMCE资源 -->
+
+<script>
+// 编辑器配置扩展
+tinymce.init({
+    selector: '#id_content',
+    height: 400,
+    plugins: [
+        'advlist autolink lists link image charmap print preview anchor',
+        'searchreplace visualblocks code fullscreen',
+        'insertdatetime media table paste code help wordcount',
+        'textcolor colorpicker'
+    ],
+    toolbar: 'undo redo | formatselect | bold italic backcolor | \
+               alignleft aligncenter alignright alignjustify | \
+               bullist numlist outdent indent | removeformat | help | \
+               fontselect fontsizeselect | forecolor backcolor',
+    content_css: [
+        '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+        '//cdnjs.cloudflare.com/ajax/libs/tinymce/5.10.0/skins/ui/oxide/content.min.css'
+    ],
+    font_formats: '微软雅黑=微软雅黑; 宋体=宋体; 黑体=黑体; 仿宋=仿宋; 楷体=楷体; 隶书=隶书; 幼圆=幼圆; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats',
+    setup: function(editor) {
+        // 编辑器内容变更时更新预览
+        editor.on('change', function() {
+            updatePreview(editor.getContent());
+        });
+
+        // 编辑器初始化完成后更新预览
+        editor.on('init', function() {
+            updatePreview(editor.getContent());
+        });
+    }
+});
+
+// 更新预览内容
+function updatePreview(content) {
+    document.querySelector('.preview-content').innerHTML = content;
+}
+
+// 切换预览模式
+document.getElementById('preview-toggle').addEventListener('click', function() {
+    document.getElementById('editor-area').style.display = 'none';
+    document.getElementById('preview-area').style.display = 'block';
+    updatePreview(tinymce.activeEditor.getContent());
+});
+
+// 切换编辑模式
+document.getElementById('edit-toggle').addEventListener('click', function() {
+    document.getElementById('editor-area').style.display = 'block';
+    document.getElementById('preview-area').style.display = 'none';
+});
+
+// 表单提交处理（清理不支持格式）
+document.getElementById('article-form').addEventListener('submit', function() {
+    // 获取编辑器内容
+    const editorContent = tinymce.activeEditor.getContent();
+
+    // 清理不支持格式的简单示例
+    // 实际项目中可以使用更复杂的清理库如DOMPurify
+    let cleanedContent = editorContent.replace(/<script[^>]*>([\S\s]*?)<\/script>/gi, '');
+    cleanedContent = cleanedContent.replace(/<style[^>]*>([\S\s]*?)<\/style>/gi, '');
+    cleanedContent = cleanedContent.replace(/<link[^>]*>/gi, '');
+
+    // 设置回编辑器
+    tinymce.activeEditor.setContent(cleanedContent);
+
+    // 如果需要，可以在此处添加更多清理逻辑
+});
+</script>
+
+<style>
+/* 编辑器样式增强 */
+.tox-tinymce {
+    border-radius: 4px !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* 预览区域样式 */
+.preview-mode {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.preview-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #212529;
+}
+
+/* 模式切换按钮样式 */
+#preview-toggle, #edit-toggle {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

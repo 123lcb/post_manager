@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">共享文章列表</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if articles %}
+        <div class="list-group">
+            {% for article in articles %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ article.title }}</h5>
+                    <small>{{ article.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+                <p class="mb-1 text-truncate">{{ article.plain_content|truncatechars:100 }}</p>
+                <div class="mt-2">
+                    <a href="{% url 'share_article_detail' article.pk %}" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-book-open"></i> 阅读全文
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
+                <h4 class="text-muted">暂无共享文章</h4>
+                <p>当前没有共享的文章</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

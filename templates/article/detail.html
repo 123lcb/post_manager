@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="card-title mb-0">{{ article.title }}</h1>
+                <div>
+                    <small class="text-muted">最后更新: {{ article.updated_at|date:"Y-m-d H:i" }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if display_plain %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                文章内容包含不支持的格式，已转换为纯文本显示
+            </div>
+            <pre class="bg-light p-3 rounded">{{ article.plain_content }}</pre>
+            {% else %}
+            <div class="article-content">
+                {{ article.content|safe }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'article_edit' article.pk %}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit"></i> 编辑文章
+                </a>
+                <a href="{% url 'article_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 检查内容是否包含不支持的格式
+document.addEventListener('DOMContentLoaded', function() {
+    const contentContainer = document.querySelector('.article-content');
+    if (!contentContainer) return;
+
+    // 检查是否存在样式问题
+    const hasInvalidStyles = contentContainer.innerHTML.includes('style="') ||
+                            contentContainer.innerHTML.includes('class="') ||
+                            contentContainer.innerHTML.includes('<font');
+
+    // 如果内容为空或包含无效样式，显示纯文本版本
+    if (contentContainer.textContent.trim() === '' || hasInvalidStyles) {
+        // 重定向到纯文本视图
+        window.location.href = "{% url 'article_detail' article.pk %}?plain=true";
+    }
+});
+</script>
+{% endblock %}
