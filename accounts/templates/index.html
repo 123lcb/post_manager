@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文章管理系统</title>
+    <title>悦文文章管理器</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -573,15 +573,21 @@
     <!-- 顶部筛选栏 -->
     <div class="top-bar">
         <div class="filter-section" style="width:50%">
-            <form class="search-box" method="get" action="{% url 'search_articles' %}">
-                <input type="text" placeholder="输入关键词搜索文章" name="q" id="searchInput">
-                <input type="text" placeholder="输入作者名" name="author" id="authorInput">
-                <input type="date" name="start_date" id="startDate">
-                <input type="date" name="end_date" id="endDate">
-                <button type="submit"><i class="fas fa-search"></i> 搜索</button>
-            </form>
+            <div class="search-box">
+                <input type="text" placeholder="输入关键词搜索文章" id="searchInput">
+                <button onclick="searchArticles()"><i class="fas fa-search"></i> 搜索</button>
+            </div>
         </div>
 
+        <div class="filter-section" style="width:30%">
+            <div class="date-picker">
+                <label>从:</label>
+                <input type="date" id="startDate">
+                <label>到:</label>
+                <input type="date" id="endDate">
+                <button onclick="filterByDate()">筛选</button>
+            </div>
+        </div>
         
         <div class="user-actions">
             {% if is_authenticated %}
@@ -590,7 +596,6 @@
         <div class="dropdown-content">
             <a href="{% url 'user_info' %}"><i class="fas fa-user"></i> 个人信息</a>
             <a href="{% url 'article_list' %}"><i class="fas fa-file-alt"></i> 我的文章</a>
-            <a href="{% url 'favorites' %}"><i class="fas fa-star"></i> 我的收藏</a>
             <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> 退出</a>
         </div>
                 </div>
@@ -659,9 +664,7 @@
                             <a href="{% url 'share_article_detail' pk=article.id %}">
                                 <button><i class="fas fa-book-open"></i> 阅读全文</button>
                             </a>
-                            <button class="favorite-btn" data-article-id="{{ article.id }}" onclick="toggleFavorite(this)">
-                                <i class="far fa-star"></i> <span>收藏</span>
-                            </button>
+                            <button><i class="far fa-star"></i> 收藏</button>
                             <button><i class="fas fa-share-alt"></i> 分享</button>
                         </div>
                     </div>
@@ -738,48 +741,27 @@
             alert('链接已复制到剪贴板');
         }
         
-        // 收藏功能
-        function toggleFavorite(btn) {
-            const articleId = btn.getAttribute('data-article-id');
-            const icon = btn.querySelector('i');
-            const span = btn.querySelector('span');
-            
-            // 判断当前状态
-            const isFavorited = icon.classList.contains('fas');
-            
-            // 发送请求
-            const url = isFavorited 
-                ? `/accounts/favorites/${articleId}/remove/`
-                : `/accounts/favorites/${articleId}/add/`;
-                
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // 切换图标和文本
-                    if (isFavorited) {
-                        icon.classList.replace('fas', 'far');
-                        span.textContent = '收藏';
-                    } else {
-                        icon.classList.replace('far', 'fas');
-                        span.textContent = '已收藏';
-                    }
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('操作失败，请重试');
-            });
-        }
-        
         // 搜索功能
+        function searchArticles() {
+            const keyword = document.getElementById('searchInput').value;
+            if (!keyword.trim()) {
+                alert('请输入搜索关键词');
+                return;
+            }
+            
+            // 显示加载状态
+            const container = document.getElementById('article-container');
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>搜索中...</h3><p>正在查找与 "' + keyword + '" 相关的文章</p></div>';
+            container.style.display = 'block';
+            document.querySelector('.empty-state').style.display = 'none';
+            
+            // 模拟搜索延迟
+            setTimeout(() => {
+                // 这里实际应调用API获取搜索结果
+                // 此处仅显示无结果状态
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><h3>未找到匹配结果</h3><p>没有找到与 "' + keyword + '" 相关的文章，请尝试其他关键词</p><button onclick="showSampleResults()"><i class="fas fa-eye"></i> 查看示例文章</button></div>';
+            }, 1500);
+        }
         
         // 显示示例文章
         function showSampleResults() {
@@ -799,9 +781,7 @@
                     <p>本文介绍了机器学习的基本概念和常见算法，适合初学者快速了解机器学习领域。内容涵盖监督学习、无监督学习和强化学习三大类算法，并提供了实际应用案例。</p>
                     <div class="article-actions">
                         <button><i class="fas fa-book-open"></i> 阅读全文</button>
-                        <button class="favorite-btn" data-article-id="1" onclick="toggleFavorite(this)">
-                            <i class="far fa-star"></i> <span>收藏</span>
-                        </button>
+                        <button><i class="far fa-star"></i> 收藏</button>
                         <button><i class="fas fa-share-alt"></i> 分享</button>
                     </div>
                 </div>
@@ -817,9 +797,7 @@
                     <p>总结了在使用React Hooks过程中积累的最佳实践和常见陷阱，帮助开发者写出更健壮的代码。文章详细介绍了useState、useEffect、useContext等核心Hook的使用技巧。</p>
                     <div class="article-actions">
                         <button><i class="fas fa-book-open"></i> 阅读全文</button>
-                        <button class="favorite-btn" data-article-id="2" onclick="toggleFavorite(this)">
-                            <i class="far fa-star"></i> <span>收藏</span>
-                        </button>
+                        <button><i class="far fa-star"></i> 收藏</button>
                         <button><i class="fas fa-share-alt"></i> 分享</button>
                     </div>
                 </div>
@@ -835,9 +813,7 @@
                     <p>探讨了卷积神经网络在图像识别领域的最新进展和应用案例。文章详细分析了CNN架构的演进，从LeNet到ResNet、EfficientNet等现代网络结构，并比较了它们的性能差异。</p>
                     <div class="article-actions">
                         <button><i class="fas fa-book-open"></i> 阅读全文</button>
-                        <button class="favorite-btn" data-article-id="3" onclick="toggleFavorite(this)">
-                            <i class="far fa-star"></i> <span>收藏</span>
-                        </button>
+                        <button><i class="far fa-star"></i> 收藏</button>
                         <button><i class="fas fa-share-alt"></i> 分享</button>
                     </div>
                 </div>
@@ -845,6 +821,28 @@
         }
         
         // 日期筛选功能
+        function filterByDate() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            if (!start || !end) {
+                alert('请选择开始日期和结束日期');
+                return;
+            }
+            
+            // 显示加载状态
+            const container = document.getElementById('article-container');
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>筛选中...</h3><p>正在筛选 ' + start + ' 至 ' + end + ' 的文章</p></div>';
+            container.style.display = 'block';
+            document.querySelector('.empty-state').style.display = 'none';
+            
+            // 模拟筛选延迟
+            setTimeout(() => {
+                // 实际应调用API获取筛选结果
+                // 此处仅显示无结果状态
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><h3>未找到匹配结果</h3><p>没有找到 ' + start + ' 至 ' + end + ' 期间发布的文章</p></div>';
+            }, 1500);
+        }
         
         // 初始化日期为最近一个月
         window.onload = function() {

@@ -17,7 +17,7 @@ class Article(models.Model):
     plain_content = models.TextField(verbose_name="纯文本内容", blank=True, null=True)
 
     def __str__(self):
-        return str(self.title) if self.title else ""
+        return self.title
 
     def save(self, *args, **kwargs):
         # 自动生成纯文本版本

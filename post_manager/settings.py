@@ -16,7 +16,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20MB
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -44,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # 添加人性化过滤器
-    'django.contrib.sites',  # 某些国际化功能需要
 ]
 
 MIDDLEWARE = [
@@ -55,8 +53,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.locale.LocaleMiddleware',  # 确保存在
-    'article.middleware.CategoryAuthorMiddleware',
 ]
 
 ROOT_URLCONF = 'post_manager.urls'
@@ -266,34 +262,3 @@ TINYMCE_DEFAULT_CONFIG = {
     'preview_styles': 'font-size font-weight',
     'content_css': '/static/css/editor_content.css',  # 自定义内容样式
 }
-
-# 设置回收站保留天数
-TRASH_RETENTION_DAYS = 30
-
-# 媒体文件配置
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-DEEPSEEK_API_KEY = 'sk-1628d6f955d04e7fa366ca12b701e44f'  # 替换为你的实际API密钥
-DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions'
-DEEPSEEK_API_TIMEOUT = 30  # 请求超时时间（秒）
-DEEPSEEK_CACHE_TIMEOUT = 60 * 60 * 24  # 缓存24小时
-
-# 确保缓存配置正确
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-    }
-}
-
-# 如果需要更持久的缓存，可以使用Redis
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django_redis.cache.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379/1',
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         }
-#     }
-# }

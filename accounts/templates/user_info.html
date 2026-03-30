@@ -591,6 +591,24 @@
                     <a href="#account-security" class="nav-link" data-section="account-security">
                         <i class="fas fa-shield-alt"></i> 账户安全
                     </a>
+                    <a href="#privacy-settings" class="nav-link" data-section="privacy-settings">
+                        <i class="fas fa-lock"></i> 隐私设置
+                    </a>
+                    <a href="#social-interaction" class="nav-link" data-section="social-interaction">
+                        <i class="fas fa-users"></i> 社交互动
+                    </a>
+                    <a href="#social-interaction" class="nav-link" data-section="notification-settings">
+                        <i class="fas fa-bell"></i> 通知设置
+                    </a>
+                    <a href="#social-interaction" class="nav-link" data-section="membership">
+                        <i class="fas fa-credit-card"></i> 会员与支付
+                    </a>
+                    <a href="#social-interaction" class="nav-link" data-section="blog-settings">
+                        <i class="fas fa-book"></i> 文章管理
+                    </a>
+                    <a href="#social-interaction" class="nav-link" data-section="preferences">
+                        <i class="fas fa-cog"></i> 偏好设置
+                    </a>
                 </nav>
             </div>
             
@@ -755,6 +773,92 @@
                     </div>
                 </div>
                 
+                <!-- 隐私设置模块 -->
+                <div class="profile-card" id="privacy-settings">
+                    <h3 class="section-title">
+                        <i class="fas fa-lock"></i> 隐私设置
+                    </h3>
+                    
+                    <div class="privacy-option">
+                        <div class="privacy-label">
+                            <i class="fas fa-eye"></i> 谁可以看到我的个人信息？
+                        </div>
+                        <select class="form-control" style="width: 180px;">
+                            <option>公开（所有人可见）</option>
+                            <option>仅好友可见</option>
+                            <option>仅自己可见</option>
+                        </select>
+                    </div>
+                    
+                    <div class="privacy-option">
+                        <div class="privacy-label">
+                            <i class="fas fa-search"></i> 是否允许搜索引擎索引我的个人资料？
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="privacy-option">
+                        <div class="privacy-label">
+                            <i class="fas fa-user-tag"></i> 是否允许通过邮箱查找我？
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="privacy-option">
+                        <div class="privacy-label">
+                            <i class="fas fa-comment"></i> 是否允许陌生人给我发私信？
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="danger-zone">
+                        <h4><i class="fas fa-exclamation-triangle"></i> 账号注销</h4>
+                        <p>永久删除账户将无法恢复，所有个人资料、文章、评论等数据将被永久删除，请谨慎操作。</p>
+                        <button class="btn btn-danger">永久删除账户</button>
+                    </div>
+                </div>
+                
+                <!-- 社交互动模块 -->
+                <div class="profile-card" id="social-interaction">
+                    <h3 class="section-title">
+                        <i class="fas fa-users"></i> 社交互动
+                    </h3>
+                    
+                    <div class="social-grid">
+                        <div class="social-card">
+                            <h5><i class="fas fa-user-friends"></i> 好友/关注管理</h5>
+                            <p>管理你关注的人和关注你的人</p>
+                            <button class="btn btn-outline" style="margin-top: 15px;">管理好友</button>
+                        </div>
+                        
+                        <div class="social-card">
+                            <h5><i class="fas fa-ban"></i> 黑名单管理</h5>
+                            <p>管理你屏蔽的用户，屏蔽后你将不再收到他们的消息</p>
+                            <button class="btn btn-outline" style="margin-top: 15px;">管理黑名单</button>
+                        </div>
+                        
+                        <div class="social-card">
+                            <h5><i class="fas fa-comments"></i> 私信设置</h5>
+                            <p>设置谁可以给你发送私信</p>
+                            <button class="btn btn-outline" style="margin-top: 15px;">设置权限</button>
+                        </div>
+                        
+                        <div class="social-card">
+                            <h5><i class="fas fa-bell"></i> 通知偏好</h5>
+                            <p>设置接收哪些类型的通知</p>
+                            <button class="btn btn-outline" style="margin-top: 15px;">通知设置</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

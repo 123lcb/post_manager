@@ -12,10 +12,6 @@
             </div>
         </div>
         <div class="card-body">
-            <!-- 显示文章图片 -->
-            {% if article.image %}
-            <img src="{{ article.image.url }}" alt="{{ article.title }}" class="img-fluid mb-3">
-            {% endif %}
             {% if display_plain %}
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -37,139 +33,26 @@
                     <i class="fas fa-arrow-left"></i> 返回列表
                 </a>
             </div>
-            <!-- 添加生成摘要和统计汇总按钮 -->
-            <div class="mt-4">
-                <button id="btn-generate-summary" class="btn btn-primary mr-2">
-                    <i class="fas fa-highlighter"></i> 生成摘要
-                </button>
-                <button id="btn-generate-stats" class="btn btn-primary">
-                    <i class="fas fa-chart-bar"></i> 文章翻译
-                </button>
-            </div>
-
-            <!-- 结果显示区域 -->
-            <div id="result-container" class="mt-4"></div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const resultContainer = document.getElementById('result-container');
-    const btnSummary = document.getElementById('btn-generate-summary');
-    const btnStats = document.getElementById('btn-generate-stats');
-
-    // 生成摘要按钮点击事件
-    btnSummary.addEventListener('click', function() {
-        toggleButtonState(btnSummary, true);
-        resultContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin mr-2"></i>正在生成摘要...</div>';
-
-        fetch(`{% url 'article_summary' article.pk %}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('请求失败');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                resultContainer.innerHTML = `
-                    <div class="card mt-3">
-                        <div class="card-header bg-info text-white">
-                            <h3 class="card-title">文章摘要</h3>
-                        </div>
-                        <div class="card-body">
-                            <p>${data.summary}</p>
-                        </div>
-                    </div>
-                `;
-            })
-            .catch(error => {
-                resultContainer.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        生成摘要失败: ${error.message}
-                    </div>
-                `;
-            })
-            .finally(() => {
-                toggleButtonState(btnSummary, false);
-            });
-    });
-
-    // 生成统计汇总按钮点击事件
-    btnStats.addEventListener('click', function() {
-        toggleButtonState(btnStats, true);
-        resultContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin mr-2"></i>正在生成翻译文本...</div>';
-
-        fetch(`{% url 'article_statistical_summary' article.pk %}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('请求失败');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                resultContainer.innerHTML = `
-                    <div class="card mt-3">
-                        <div class="card-header bg-info text-white">
-                            <h3 class="card-title">翻译结果</h3>
-                        </div>
-                        <div class="card-body">
-                            <p>${data.statistical_summary}</p>
-                        </div>
-                    </div>
-                `;
-            })
-            .catch(error => {
-                resultContainer.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        生成翻译结果失败: ${error.message}
-                    </div>
-                `;
-            })
-            .finally(() => {
-                toggleButtonState(btnStats, false);
-            });
-    });
-
-    // 辅助函数：切换按钮状态（加载中/正常）
-    function toggleButtonState(button, isLoading) {
-        if (isLoading) {
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
-        } else {
-            button.disabled = false;
-            button.innerHTML = button.id === 'btn-generate-summary'
-                ? '<i class="fas fa-highlighter"></i> 生成摘要'
-                : '<i class="fas fa-chart-bar"></i> 文章翻译';
-        }
-    }
-});
-</script>
-
 <script>
 // 检查内容是否包含不支持的格式
 document.addEventListener('DOMContentLoaded', function() {
     const contentContainer = document.querySelector('.article-content');
     if (!contentContainer) return;
 
+    // 检查是否存在样式问题
     const hasInvalidStyles = contentContainer.innerHTML.includes('style="') ||
                             contentContainer.innerHTML.includes('class="') ||
                             contentContainer.innerHTML.includes('<font');
 
+    // 如果内容为空或包含无效样式，显示纯文本版本
     if (contentContainer.textContent.trim() === '' || hasInvalidStyles) {
+        // 重定向到纯文本视图
         window.location.href = "{% url 'article_detail' article.pk %}?plain=true";
     }
 });

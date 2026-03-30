@@ -1,7 +1,6 @@
 from captcha.models import CaptchaStore
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
-from django.db.models import Q
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.core.mail import send_mail
 from django.conf import settings
@@ -10,18 +9,13 @@ from .code import check_code
 from io import BytesIO
 import json
 import os
-from .models import Favorite  # 导入收藏模型
-from article.models import ShareArticle  # 导入文章模型
-
-from django.core.cache import cache
 
 def image_code(request):
     """ Generate image verification code """
     img, code_string = check_code()
     
-    # Store code in cache with 60s expiration
-    cache_key = f"image_code_{request.session.session_key}"
-    cache.set(cache_key, code_string, timeout=60)
+    request.session["image_code"] = code_string
+    request.session.set_expiry(60)
 
     stream = BytesIO()
     img.save(stream, 'png')
@@ -34,17 +28,12 @@ def register(request):
         form = RegisterForm(request.POST, initial={'request': request})
         # Get user submitted verification code
         user_submitted_code = request.POST.get('image_code')
-        # Verify code using cache
-        cache_key = f"image_code_{request.session.session_key}"
-        cached_code = cache.get(cache_key, '').strip().lower()
+        # Verify code (case insensitive and strip whitespace)
+        session_code = request.session.get('image_code', '').strip().lower()
         user_code = (user_submitted_code or '').strip().lower()
-        
-        if not cached_code or user_code != cached_code:
-            messages.error(request, '验证码错误或已过期')
+        if user_code != session_code:
+            messages.error(request, f'验证码错误，请输入{session_code.upper()}。')
             return render(request, 'register.html', {'form': form})
-        
-        # Clear used code
-        cache.delete(cache_key)
         
         if form.is_valid():
             try:
@@ -163,81 +152,11 @@ def user_info(request):
     return render(request, 'user_info.html', context)
 
 from article.models import ShareArticle
-from django.db.models import Q
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import User
-from .models import UserProfile, UserActionLog
-from article.models import ShareArticle
-
-@user_passes_test(lambda u: u.is_superuser)
-def account_management(request):
-    """账号管理视图"""
-    search_query = request.GET.get('q', '')
-    users = User.objects.all()
-    
-    if search_query:
-        users = users.filter(
-            Q(username__icontains=search_query) |
-            Q(email__icontains=search_query) |
-            Q(profile__nickname__icontains=search_query)
-        )
-    
-    # 预加载profile数据减少查询
-    users = users.select_related('profile')
-    
-    context = {
-        'users': users,
-        'search_query': search_query
-    }
-    return render(request, 'account_management.html', context)
-
-@user_passes_test(lambda u: u.is_superuser)
-def toggle_freeze_account(request, user_id):
-    """冻结/解冻账号"""
-    if request.method == 'POST':
-        try:
-            user = User.objects.get(pk=user_id)
-            profile = user.profile
-            reason = request.POST.get('reason', '')
-            
-            # 记录操作日志
-            if profile.is_frozen:
-                action = 'UNFREEZE'
-                message = f'已解冻账号 {user.username}'
-            else:
-                action = 'FREEZE'
-                message = f'已冻结账号 {user.username}'
-            
-            UserActionLog.objects.create(
-                admin=request.user,
-                user=user,
-                action=action,
-                reason=reason
-            )
-            
-            # 切换冻结状态
-            profile.is_frozen = not profile.is_frozen
-            profile.save()
-            
-            messages.success(request, message)
-        except Exception as e:
-            messages.error(request, f'操作失败: {str(e)}')
-    
-    return redirect('account_management')
-
-@user_passes_test(lambda u: u.is_superuser)
-def action_logs(request):
-    """操作记录查询"""
-    logs = UserActionLog.objects.all().select_related('admin', 'user')
-    return render(request, 'action_logs.html', {'logs': logs})
 
 def index(request):
     """首页视图"""
-    # 获取共享文章，按创建时间倒序排列，过滤已删除和已下架的文章
-    shared_articles = ShareArticle.objects.filter(
-        is_deleted=False, 
-        is_removed=False
-    ).order_by('-created_at')
+    # 获取共享文章，按创建时间倒序排列
+    shared_articles = ShareArticle.objects.all().order_by('-created_at')
     
     context = {
         'user': request.user,
@@ -245,51 +164,6 @@ def index(request):
         'shared_articles': shared_articles  # 添加共享文章数据
     }
     return render(request, 'index.html', context)
-
-def search_articles(request):
-    """搜索文章视图"""
-    query = request.GET.get('q', '')
-    author = request.GET.get('author', '')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    
-    # 获取共享文章，过滤已删除和已下架的文章
-    articles = ShareArticle.objects.filter(
-        is_deleted=False,
-        is_removed=False
-    )
-    
-    # 应用搜索查询
-    if query:
-        articles = articles.filter(
-            Q(title__icontains=query) |
-            Q(plain_content__icontains=query))
-    
-    # 应用作者查询
-    if author:
-        articles = articles.filter(
-            Q(author__username__icontains=author))
-    
-    # 应用日期范围过滤
-    if start_date:
-        articles = articles.filter(created_at__gte=start_date)
-    if end_date:
-        # 将结束日期加1天，以包含当天所有文章
-        from datetime import datetime, timedelta
-        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        articles = articles.filter(created_at__lt=end_date_obj.strftime('%Y-%m-%d'))
-    
-    # 按创建时间倒序排列
-    articles = articles.order_by('-created_at')
-    
-    context = {
-        'articles': articles,
-        'query': query,
-        'start_date': start_date,
-        'end_date': end_date,
-        'is_authenticated': request.user.is_authenticated
-    }
-    return render(request, 'search_results.html', context)
 
     
 def password_reset(request):
@@ -378,17 +252,12 @@ def login_view(request):
         form = LoginForm(data=request.POST)
         # Get user submitted verification code
         user_submitted_code = request.POST.get('image_code')
-        # Verify code using cache
-        cache_key = f"image_code_{request.session.session_key}"
-        cached_code = cache.get(cache_key, '').strip().lower()
+        # Verify code (case insensitive and strip whitespace)
+        session_code = request.session.get('image_code', '').strip().lower()
         user_code = (user_submitted_code or '').strip().lower()
-        
-        if not cached_code or user_code != cached_code:
-            messages.error(request, '验证码错误或已过期')
+        if user_code != session_code:
+            messages.error(request, '验证码错误，请重新输入')
             return render(request, 'login.html', {'form': form})
-        
-        # Clear used code
-        cache.delete(cache_key)
         
         username = request.POST.get('username')
         # 基于用户名+IP地址锁定，实现设备级锁定
@@ -422,8 +291,6 @@ def login_view(request):
         # 认证用户
         user = authenticate(username=form.cleaned_data['username'],
                           password=form.cleaned_data['password'])
-        
-        # 检查用户是否存在且未被冻结
         if user is None:
             failures += 1
             cache.set(cache_key, failures, 300)
@@ -439,23 +306,14 @@ def login_view(request):
             else:
                 msg = '用户名或密码错误'
                 messages.error(request, msg)
-            return render(request, 'login.html', {'form': form})
-        elif hasattr(user, 'profile') and user.profile.is_frozen:
-            messages.error(request, '您的账号已被冻结，请联系管理员')
-            failures += 1
-            cache.set(cache_key, failures, 300)
-            cache.set(f'{cache_key}_time', timezone.now(), 300)
-            return render(request, 'login.html', {'form': form})
         else:
             # 登录成功，清除失败计数
             cache.delete(cache_key)
             login(request, user)
             return redirect('index')  # 登录成功后重定向到个人信息页面
-
-    # 处理GET请求
-    form = LoginForm()
+    else:
+        form = LoginForm()
     return render(request, 'login.html', {'form': form})
-
 
 
 @login_required
@@ -464,57 +322,6 @@ def logout_view(request):
     logout(request)
     # 重定向到首页，确保返回HttpResponse对象
     return redirect('index')
-
-@user_passes_test(lambda u: u.is_superuser)
-def content_moderation(request):
-    """内容审核视图"""
-    # 处理批量操作
-    if request.method == 'POST':
-        # 获取选中的文章ID列表
-        selected_ids = request.POST.getlist('selected_articles')
-        action = request.POST.get('action')
-        
-        if not selected_ids:
-            messages.warning(request, '请选择要操作的文章')
-            return redirect('content_moderation')
-        
-        # 根据操作类型更新文章状态
-        if action == 'remove':
-            ShareArticle.objects.filter(id__in=selected_ids).update(is_removed=True)
-            messages.success(request, f'已下架 {len(selected_ids)} 篇文章')
-        elif action == 'restore':
-            ShareArticle.objects.filter(id__in=selected_ids).update(is_removed=False)
-            messages.success(request, f'已恢复 {len(selected_ids)} 篇文章')
-    
-    # 获取查询参数
-    query = request.GET.get('q', '')
-    status_filter = request.GET.get('status', 'all')
-    
-    # 获取所有共享文章
-    articles = ShareArticle.objects.filter(is_deleted=False)
-    
-    # 应用查询过滤器
-    if query:
-        articles = articles.filter(
-            Q(title__icontains=query) |
-            Q(author__username__icontains=query)
-        )
-    
-    # 应用状态过滤器
-    if status_filter == 'removed':
-        articles = articles.filter(is_removed=True)
-    elif status_filter == 'active':
-        articles = articles.filter(is_removed=False)
-    
-    # 按创建时间倒序排列
-    articles = articles.order_by('-created_at')
-    
-    context = {
-        'articles': articles,
-        'query': query,
-        'status_filter': status_filter
-    }
-    return render(request, 'content_moderation.html', context)
 
 @login_required
 def verify_email_change(request):
@@ -668,50 +475,3 @@ def reset_password_with_code(request):
         'success': False, 
         'message': '无效请求'
     })
-
-@login_required
-def favorites(request):
-    """收藏列表视图"""
-    # 获取当前用户的所有收藏文章
-    favorites = Favorite.objects.filter(user=request.user).select_related('article')
-    
-    # 提取收藏的文章对象
-    articles = [fav.article for fav in favorites]
-    
-    context = {
-        'articles': articles,
-        'is_authenticated': request.user.is_authenticated
-    }
-    return render(request, 'favorites.html', context)
-
-@login_required
-def add_favorite(request, article_id):
-    """添加收藏视图"""
-    try:
-        # 获取文章对象
-        article = ShareArticle.objects.get(pk=article_id, is_deleted=False, is_removed=False)
-        
-        # 检查是否已收藏
-        if Favorite.objects.filter(user=request.user, article=article).exists():
-            return JsonResponse({'success': False, 'message': '已收藏该文章'})
-        
-        # 创建收藏记录
-        Favorite.objects.create(user=request.user, article=article)
-        
-        return JsonResponse({'success': True, 'message': '收藏成功'})
-    except ShareArticle.DoesNotExist:
-        return JsonResponse({'success': False, 'message': '文章不存在或已被删除'})
-
-@login_required
-def remove_favorite(request, article_id):
-    """取消收藏视图"""
-    try:
-        # 获取收藏记录
-        favorite = Favorite.objects.get(user=request.user, article_id=article_id)
-        
-        # 删除收藏记录
-        favorite.delete()
-        
-        return JsonResponse({'success': True, 'message': '已取消收藏'})
-    except Favorite.DoesNotExist:
-        return JsonResponse({'success': False, 'message': '未收藏该文章'})
