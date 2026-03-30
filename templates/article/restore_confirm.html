@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-success">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0"><i class="fas fa-undo"></i> {% trans "恢复文章" %}</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">
+                {% blocktrans with title=article.title %}
+                您确定要恢复文章 <strong>"{{ title }}"</strong> 吗？
+                {% endblocktrans %}
+            </p>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                {% trans "恢复后文章将回到原来的分类位置" %}
+            </div>
+
+            <div class="mt-4">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'trash_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> {% trans "取消" %}
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-undo"></i> {% trans "确认恢复" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

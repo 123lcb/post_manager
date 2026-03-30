@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">{{ title }}</h3>
+        </div>
+        <div class="card-body">
+            <!-- 添加作者信息提示 -->
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                您正在以 <strong>{{ request.user.username }}</strong> 的身份创建分类
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{% trans "错误!" %}</strong> {% trans "请修正以下问题：" %}
+                        <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    {{ form.name.label_tag }}
+                    {{ form.name }}
+                    <small class="form-text text-muted">
+                        {% trans "同一父分类下名称必须唯一" %}
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    {{ form.parent.label_tag }}
+                    {{ form.parent }}
+                    <small class="form-text text-muted">
+                        {% trans "最多支持三级分类" %}
+                    </small>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> {% trans "返回列表" %}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% trans "保存分类" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

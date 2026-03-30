@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft frontcover1</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        a {
+            text-decoration: none
+        }
+        
+        a:hover {
+            text-decoration: none
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+        }
+        
+        h2 {
+            color: #222;
+            font-size: 100px;
+        }
+        
+        h2 a {
+            text-decoration: none;
+            color: white;
+        }
+        
+        h2 span {
+            transition: 0.5s;
+        }
+        
+        h2:hover span:nth-child(1) {
+            margin-right: 10px;
+        }
+        
+        h2:hover span:nth-child(2) {
+            margin-left: 30px;
+        }
+        
+        h2 span:nth-child(1)::after {
+            opacity: 0;
+            transition: 2s;
+        }
+        
+        h2:hover span {
+            color: white;
+            text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px #fff, 0 0 80px #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <a >
+        <h2><span>欢迎使用 </span><span> 文章管理</span></h2>
+    </a>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">{% trans "删除分类确认" %}</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">
+                {% blocktrans with name=category.name path=category.get_full_path %}
+                您确定要删除分类 <strong>"{{ name }}"</strong> (路径: {{ path }}) 吗？
+                {% endblocktrans %}
+            </p>
+
+            {% if has_children %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                {% trans "此分类包含子分类，删除操作将会同时删除所有子分类！" %}
+            </div>
+            {% endif %}
+
+            {% if has_articles %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                {% trans "此分类包含文章，删除后这些文章将变为未分类状态！" %}
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> {% trans "取消" %}
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> {% trans "确认删除" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

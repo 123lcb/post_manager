@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0"><i class="fas fa-broom"></i> {% trans "清空回收站" %}</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">
+                {% trans "您确定要清空回收站吗？" %}
+            </p>
+
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                {% trans "此操作将永久删除回收站中的所有文章，无法恢复！" %}
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>{% trans "回收站统计" %}</h5>
+                    <ul>
+                        <li>{% trans "总文章数" %}: {{ trash_count }}</li>
+                        <li>{% trans "最早删除的文章" %}: {{ oldest_deleted|date:"Y-m-d"|default:"无" }}</li>
+                        <li>{% trans "最近删除的文章" %}: {{ newest_deleted|date:"Y-m-d"|default:"无" }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form.days.label_tag }}
+                        {{ form.days }}
+                        <small class="form-text text-muted">
+                            {% trans "例如：输入30将删除30天前删除的文章" %}
+                        </small>
+                    </div>
+
+                    <div class="form-group form-check">
+                        {{ form.confirm }}
+                        <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
+                            {% trans "我明白此操作不可撤销，并确认清空回收站" %}
+                        </label>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'trash_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> {% trans "取消" %}
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-broom"></i> {% trans "清空回收站" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

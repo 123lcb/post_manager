@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">{{ title }}</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" id="article-form">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>{% trans "错误!" %}</strong> {% trans "请修正以下问题：" %}
+                        <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- 标题字段 -->
+                <div class="form-group">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                </div>
+
+                <!-- 分类选择字段 -->
+                <div class="form-group">
+                    <label for="id_category">{% trans "文章分类" %}</label>
+                    <div class="d-flex align-items-center">
+                        <select name="category" class="form-control" id="id_category" required>
+                            <option value="">{% trans "-- 选择分类 --" %}</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}"
+                                    {% if article.category.id == category.id %}selected{% endif %}>
+                                    {{ category.get_full_path }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-outline-primary ml-2"
+                                data-toggle="modal" data-target="#categoryModal">
+{#                            <i class="fas fa-plus"></i> {% trans "新建分类" %}#}
+                            <a href="{% url 'category_create' %}" class="btn btn-primary">
+                                 <i class="fas fa-folder-plus"></i> {% trans "创建分类" %}
+                            </a>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">
+                        {% trans "提示：只能选择最末级分类（三级分类）" %}
+                    </small>
+                </div>
+
+                <!-- 富文本编辑器区域 -->
+                <div class="form-group">
+                    <div class="d-flex justify-content-between mb-2">
+                        <label for="{{ form.content.id_for_label }}">{% trans "文章内容" %}</label>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="preview-toggle">
+                                <i class="fas fa-eye"></i> {% trans "预览模式" %}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="edit-toggle">
+                                <i class="fas fa-edit"></i> {% trans "编辑模式" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 编辑器和预览容器 -->
+                    <div class="editor-container">
+                        <div class="editor-mode" id="editor-area">
+                            {{ form.content }}
+                        </div>
+                        <div class="preview-mode" id="preview-area" style="display: none;">
+                            <div class="preview-content card p-3" style="min-height: 400px; background-color: #f8f9fa;">
+                                <!-- 预览内容将在这里渲染 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'article_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> {% trans "返回列表" %}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% trans "保存文章" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{#<!-- 新建分类模态框 -->#}
+{#<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">#}
+{#    <div class="modal-dialog" role="document">#}
+{#        <div class="modal-content">#}
+{#            <div class="modal-header">#}
+{#                <a href="{% url 'category_create' %}" class="btn btn-primary">{% trans "新建分类" %}<a>#}
+{#                <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+{#                    <span aria-hidden="true">&times;</span>#}
+{#                </button>#}
+{#            </div>#}
+{#            <div class="modal-body">#}
+{#                <form id="category-form" method="post" action="{% url 'category_create' %}">#}
+{#                    {% csrf_token %}#}
+{#                    <div class="form-group">#}
+{#                        <label for="category-name">{% trans "分类名称" %}</label>#}
+{#                        <input type="text" class="form-control" id="category-name" name="name" required>#}
+{#                    </div>#}
+{#                    <div class="form-group">#}
+{#                        <label for="parent-category">{% trans "父级分类" %}</label>#}
+{#                        <select class="form-control" id="parent-category" name="parent">#}
+{#                            <option value="">{% trans "-- 无父分类 (顶级分类) --" %}</option>#}
+{#                            {% for category in all_categories %}#}
+{#                                <option value="{{ category.id }}">{{ category.get_full_path }}</option>#}
+{#                            {% endfor %}#}
+{#                        </select>#}
+{#                    </div>#}
+{#                </form>#}
+{#            </div>#}
+{#            <div class="modal-footer">#}
+{#                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "取消" %}</button>#}
+{#                <button type="button" class="btn btn-primary" id="save-category">{% trans "保存分类" %}</button>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media }}  <!-- 引入TinyMCE资源 -->
+
+<script>
+// 分类选择初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 保存分类按钮事件
+    document.getElementById('save-category').addEventListener('click', function() {
+        const form = document.getElementById('category-form');
+        const name = document.getElementById('category-name').value;
+        const parentId = document.getElementById('parent-category').value;
+
+        if (!name) {
+            alert('{% trans "请输入分类名称" %}');
+            return;
+        }
+
+        // 发送AJAX请求创建分类
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `name=${encodeURIComponent(name)}&parent=${parentId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 添加新分类到选择框
+                const categorySelect = document.getElementById('id_category');
+                const option = document.createElement('option');
+                option.value = data.category_id;
+                option.textContent = data.full_path;
+                option.selected = true;
+                categorySelect.appendChild(option);
+
+                // 关闭模态框
+                $('#categoryModal').modal('hide');
+
+                // 重置表单
+                form.reset();
+
+                alert('{% trans "分类创建成功！" %}');
+            } else {
+                alert(data.error || '{% trans "创建分类失败" %}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{% trans "请求失败，请重试" %}');
+        });
+    });
+
+    // 编辑器配置扩展
+tinymce.init({
+    selector: '#id_content',
+    height: 400,
+    plugins: [
+        'advlist autolink lists link image charmap print preview anchor',
+        'searchreplace visualblocks code fullscreen',
+        'insertdatetime media table paste code help wordcount',
+        'textcolor colorpicker'
+    ],
+    toolbar: 'undo redo | formatselect | bold italic backcolor | \
+               alignleft aligncenter alignright alignjustify | \
+               bullist numlist outdent indent | removeformat | help | \
+               fontselect fontsizeselect | forecolor backcolor',
+    content_css: [
+        '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+        '//cdnjs.cloudflare.com/ajax/libs/tinymce/5.10.0/skins/ui/oxide/content.min.css'
+    ],
+    font_formats: '微软雅黑=微软雅黑; 宋体=宋体; 黑体=黑体; 仿宋=仿宋; 楷体=楷体; 隶书=隶书; 幼圆=幼圆; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats',
+    setup: function(editor) {
+        // 编辑器内容变更时更新预览
+        editor.on('change', function() {
+            updatePreview(editor.getContent());
+        });
+
+        // 编辑器初始化完成后更新预览
+        editor.on('init', function() {
+            updatePreview(editor.getContent());
+        });
+    }
+});
+
+// 更新预览内容
+function updatePreview(content) {
+    document.querySelector('.preview-content').innerHTML = content;
+}
+
+// 切换预览模式
+document.getElementById('preview-toggle').addEventListener('click', function() {
+    document.getElementById('editor-area').style.display = 'none';
+    document.getElementById('preview-area').style.display = 'block';
+    updatePreview(tinymce.activeEditor.getContent());
+});
+
+// 切换编辑模式
+document.getElementById('edit-toggle').addEventListener('click', function() {
+    document.getElementById('editor-area').style.display = 'block';
+    document.getElementById('preview-area').style.display = 'none';
+});
+
+// 表单提交处理（清理不支持格式）
+document.getElementById('article-form').addEventListener('submit', function() {
+    // 获取编辑器内容
+    const editorContent = tinymce.activeEditor.getContent();
+
+    // 清理不支持格式的简单示例
+    // 实际项目中可以使用更复杂的清理库如DOMPurify
+    let cleanedContent = editorContent.replace(/<script[^>]*>([\S\s]*?)<\/script>/gi, '');
+    cleanedContent = cleanedContent.replace(/<style[^>]*>([\S\s]*?)<\/style>/gi, '');
+    cleanedContent = cleanedContent.replace(/<link[^>]*>/gi, '');
+
+    // 设置回编辑器
+    tinymce.activeEditor.setContent(cleanedContent);
+
+    // 如果需要，可以在此处添加更多清理逻辑
+});
+
+});
+</script>
+    <style>
+/* 编辑器样式增强 */
+.tox-tinymce {
+    border-radius: 4px !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* 预览区域样式 */
+.preview-mode {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.preview-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #212529;
+}
+
+/* 模式切换按钮样式 */
+#preview-toggle, #edit-toggle {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

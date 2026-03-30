@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的收藏 - 文章管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e88e5;
+            --secondary: #43a047;
+            --accent: #fb8c00;
+            --bg-dark: #f5f5f5;
+            --bg-light: #ffffff;
+            --text-main: rgba(0,0,0,0.87);
+            --text-muted: rgba(0,0,0,0.6);
+            --border: #e0e0e0;
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body { 
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* 顶部导航栏 */
+        .top-bar {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-left: auto;
+        }
+        
+        .user-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropbtn {
+            background-color: transparent;
+            color: var(--primary);
+            font-weight: 500;
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropbtn:hover {
+            background: rgba(30, 136, 229, 0.1);
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 4px;
+            overflow: hidden;
+            right: 0;
+            top: 100%;
+        }
+        
+        .dropdown-content a {
+            color: var(--text-main);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: rgba(30, 136, 229, 0.1);
+            color: var(--primary);
+        }
+        
+        .user-dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        .dropdown-content i {
+            width: 20px;
+            text-align: center;
+            margin-right: 8px;
+        }
+        
+        .user-actions a {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .user-actions a:hover {
+            background: rgba(30, 136, 229, 0.1);
+        }
+        
+        .user-actions .btn-register {
+            background: linear-gradient(135deg, var(--secondary), #2e7d32);
+            color: white;
+        }
+        
+        .user-actions .btn-register:hover {
+            opacity: 0.9;
+            transform: scale(0.98);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            min-height: 70vh;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* 结果卡片 */
+        .result-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #e8e8e8;
+            transition: all 0.3s;
+        }
+        .result-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            color: var(--text-muted);
+            font-size: 0.9em;
+            flex-wrap: wrap;
+        }
+        
+        .article-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .article-actions button {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary), #6d28d9);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+        }
+
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .empty-state p {
+            color: #999;
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .section-title h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .center-area {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="top-bar">
+        <h2 style="margin:0; flex:1;"><i class="fas fa-star"></i> 我的收藏</h2>
+        
+        <div class="user-actions">
+            {% if is_authenticated %}
+                <div class="user-dropdown">
+                    <button class="dropbtn">我的 <i class="fas fa-caret-down"></i></button>
+                    <div class="dropdown-content">
+                        <a href="{% url 'user_info' %}"><i class="fas fa-user"></i> 个人信息</a>
+                        <a href="{% url 'article_list' %}"><i class="fas fa-file-alt"></i> 我的文章</a>
+                        <a href="{% url 'favorites' %}"><i class="fas fa-star"></i> 我的收藏</a>
+                        <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> 退出</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn-register"><i class="fas fa-user-plus"></i> 注册</a>
+                <a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> 登录</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 收藏文章列表 -->
+        <div class="center-area">
+            <div class="section-title">
+                <h2><i class="fas fa-bookmark"></i> 收藏的文章</h2>
+            </div>
+            
+            {% if articles %}
+                <div class="favorites-list">
+                    {% for article in articles %}
+                    <div class="result-card">
+                        <h3><i class="fas fa-file-alt"></i> {{ article.title }}</h3>
+                        <div class="article-meta">
+                            <span><i class="fas fa-user"></i> {{ article.author.username }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ article.created_at|date:"Y-m-d" }}</span>
+                        </div>
+                        <p>{{ article.plain_content|truncatechars:200 }}</p>
+                        <div class="article-actions">
+                            <a href="{% url 'share_article_detail' pk=article.id %}">
+                                <button><i class="fas fa-book-open"></i> 阅读全文</button>
+                            </a>
+                            <button class="favorite-btn" data-article-id="{{ article.id }}" onclick="toggleFavorite(this)">
+                                <i class="fas fa-star"></i> <span>取消收藏</span>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <h3>暂无收藏文章</h3>
+                    <p>您还没有收藏任何文章，快去首页发现精彩内容吧！</p>
+                    <a href="{% url 'index' %}"><button><i class="fas fa-home"></i> 返回首页</button></a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // 收藏功能
+        function toggleFavorite(btn) {
+            const articleId = btn.getAttribute('data-article-id');
+            const icon = btn.querySelector('i');
+            const span = btn.querySelector('span');
+            
+            // 发送请求取消收藏
+            const url = `/accounts/favorites/${articleId}/remove/`;
+                
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 从页面中移除该文章卡片
+                    btn.closest('.result-card').remove();
+                    
+                    // 检查是否还有文章，如果没有则显示空状态
+                    if (document.querySelectorAll('.result-card').length === 0) {
+                        document.querySelector('.favorites-list').innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-star"></i>
+                                <h3>暂无收藏文章</h3>
+                                <p>您还没有收藏任何文章，快去首页发现精彩内容吧！</p>
+                                <a href="{% url 'index' %}"><button><i class="fas fa-home"></i> 返回首页</button></a>
+                            </div>
+                        `;
+                    }
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败，请重试');
+            });
+        }
+    </script>
+</body>
+</html>

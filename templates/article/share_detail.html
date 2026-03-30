@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="card-title mb-0">{{ article.title }}</h1>
+                <div>
+                    <small class="text-muted">创建时间: {{ article.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if display_plain %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                文章内容包含不支持的格式，已转换为纯文本显示
+            </div>
+            <pre class="bg-light p-3 rounded">{{ article.plain_content }}</pre>
+            {% else %}
+            <div class="article-content">
+                {{ article.content|safe }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 评论区域 -->
+        <div class="card-body border-top">
+            <h4 class="mb-4">评论 ({{ comments.count }})</h4>
+            
+            <!-- 评论列表 -->
+            {% for comment in comments %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            {{ comment.author.username }}
+                        </h6>
+                        <small class="text-muted">
+                            {{ comment.created_at|date:"Y-m-d H:i" }}
+                        </small>
+                    </div>
+                    <p class="card-text">{{ comment.content }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-info">暂无评论</div>
+            {% endfor %}
+
+            <!-- 评论表单 -->
+            {% if user.is_authenticated %}
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ comment_form.content }}
+                </div>
+                <button type="submit" class="btn btn-primary">提交评论</button>
+            </form>
+            {% else %}
+            <div class="alert alert-warning">
+                请<a href="{% url 'login' %}">登录</a>后发表评论
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card-footer">
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 检查内容是否包含不支持的格式
+document.addEventListener('DOMContentLoaded', function() {
+    const contentContainer = document.querySelector('.article-content');
+    if (!contentContainer) return;
+
+    // 检查是否存在样式问题
+    const hasInvalidStyles = contentContainer.innerHTML.includes('style="') ||
+                            contentContainer.innerHTML.includes('class="') ||
+                            contentContainer.innerHTML.includes('<font');
+
+    // 如果内容为空或包含无效样式，显示纯文本版本
+    if (contentContainer.textContent.trim() === '' || hasInvalidStyles) {
+        // 重定向到纯文本视图
+        window.location.href = "{% url 'share_article_detail' article.pk %}?plain=true";
+    }
+});
+</script>
+{% endblock %}

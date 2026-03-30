@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0"><i class="fas fa-trash"></i> {% trans "永久删除文章" %}</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">
+                {% blocktrans with title=article.title %}
+                您确定要<strong class="text-danger">永久删除</strong>文章 <strong>"{{ title }}"</strong> 吗？
+                {% endblocktrans %}
+            </p>
+
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                {% trans "此操作不可撤销！文章将被永久删除，无法恢复。" %}
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>{% trans "文章信息" %}</h5>
+                    <ul>
+                        <li>{% trans "创建时间" %}: {{ article.created_at|date:"Y-m-d H:i" }}</li>
+                        <li>{% trans "删除时间" %}: {{ article.deleted_at|date:"Y-m-d H:i" }}</li>
+                        {% if article.deletion_reason %}
+                        <li>{% trans "删除原因" %}: {{ article.deletion_reason }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'trash_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> {% trans "取消" %}
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> {% trans "确认永久删除" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

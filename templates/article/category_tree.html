@@ -1,0 +1,38 @@
+<li>
+    <div class="d-flex align-items-center">
+        {% if category.children.exists %}
+        <span class="toggle-children">
+            <i class="fas fa-minus"></i>
+        </span>
+        {% else %}
+        <span style="width: 24px; margin-right: 0.5rem;"></span>
+        {% endif %}
+
+        <div class="category-item flex-grow-1">
+          <span class="category-path">
+                <a href="{% url 'category_detail' category.pk %}" class="text-dark">
+                    {{ category.get_full_path }}
+                </a>
+          </span>
+
+
+
+            <div class="category-actions">
+                <a href="{% url 'category_edit' category.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'category_delete' category.pk %}" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if category.children.exists %}
+    <ul class="children-list">
+        {% for child in category.children.all %}
+            {% include "article/category_tree.html" with category=child %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>

@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --primary: #1e88e5;
+            --secondary: #43a047;
+            --accent: #fb8c00;
+            --bg-dark: #f5f5f5;
+            --bg-light: #ffffff;
+            --text-main: rgba(0,0,0,0.87);
+            --text-muted: rgba(0,0,0,0.6);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body { 
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* 顶部筛选栏 - 现代材质设计 */
+        .top-bar {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background: white;
+            border-bottom: 1px solid #e8e8e8;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 结果卡片 */
+        .result-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #e8e8e8;
+            transition: all 0.3s;
+        }
+        .result-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        
+        .article-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* 按钮美化 */
+        button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary), #6d28d9);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+        }
+
+        /* 评论模块基础样式 */
+        .comments-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        
+        .comment {
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        
+        /* 分类和标签基础样式 */
+        .category-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .category-item.active {
+            background-color: rgba(30, 136, 229, 0.1);
+            color: var(--primary);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 4px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        /* 主内容区布局 */
+        .main-content {
+            height: 70vh;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: white;
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    {% block header %}
+    <!-- 顶部导航栏 -->
+    <div class="top-bar">
+        {% block top_bar %}{% endblock %}
+    </div>
+    {% endblock %}
+
+    {% block content %}
+    <!-- 主内容区 -->
+    <div class="main-content">
+        {% block sidebar_left %}{% endblock %}
+        {% block main_content %}{% endblock %}
+        {% block sidebar_right %}{% endblock %}
+    </div>
+    {% endblock %}
+
+    {% block footer %}{% endblock %}
+
+    <script>
+        // 基础JavaScript框架
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化富文本编辑器
+            const initRichText = function(textarea) {
+                if (!textarea) return;
+                
+                // 富文本按钮功能
+                textarea.parentNode.querySelectorAll('.btn-text').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const command = this.textContent.toLowerCase();
+                        if (command === 'b') {
+                            document.execCommand('bold', false, null);
+                        } else if (command === 'i') {
+                            document.execCommand('italic', false, null);
+                        } else if (command === 'u') {
+                            document.execCommand('underline', false, null);
+                        } else if (command === '🔗') {
+                            const url = prompt('输入链接地址:');
+                            if (url) {
+                                document.execCommand('createLink', false, url);
+                            }
+                        }
+                    });
+                });
+            };
+
+            // 初始化所有富文本区域
+            document.querySelectorAll('.comment-form textarea').forEach(initRichText);
+        });
+
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+</html>

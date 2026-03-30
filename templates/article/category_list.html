@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{% trans "文章分类管理" %}</h1>
+        <a href="{% url 'category_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> {% trans "创建新分类" %}
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if root_categories %}
+        <div class="card">
+            <div class="card-body">
+                <ul class="list-group list-group-flush category-tree">
+                    {% for category in root_categories %}
+                        {% include "article/category_tree.html" with category=category %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+                <h4 class="text-muted">{% trans "您还没有创建任何分类" %}</h4>
+                <p>{% trans "点击上方按钮创建您的第一个分类" %}</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 分类树形结构交互
+document.querySelectorAll('.toggle-children').forEach(toggle => {
+    toggle.addEventListener('click', function() {
+        const parentLi = this.closest('li');
+        const childrenUl = parentLi.querySelector('> ul');
+
+        if (childrenUl) {
+            childrenUl.classList.toggle('d-none');
+            const icon = this.querySelector('i');
+            if (childrenUl.classList.contains('d-none')) {
+                icon.classList.remove('fa-minus');
+                icon.classList.add('fa-plus');
+            } else {
+                icon.classList.remove('fa-plus');
+                icon.classList.add('fa-minus');
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.category-tree ul {
+    list-style-type: none;
+    padding-left: 1.5rem;
+}
+
+.category-tree li {
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.category-tree .category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    margin-bottom: 0.25rem;
+}
+
+.category-tree .category-item:hover {
+    background-color: #e9ecef;
+}
+
+.category-tree .category-path {
+    font-weight: 500;
+    color: #495057;
+}
+
+.category-tree .toggle-children {
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    color: #6c757d;
+}
+
+.category-tree .category-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.category-tree .children-list {
+    margin-top: 0.5rem;
+    margin-left: 1.5rem;
+    border-left: 2px solid #dee2e6;
+    padding-left: 1rem;
+}
+</style>
+{% endblock %}

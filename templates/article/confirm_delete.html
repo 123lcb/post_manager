@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">{% trans "删除确认" %}</h3>
+        </div>
+        <div class="card-body">
+            <p class="lead">{% blocktrans with title=article.title %}您确定要删除文章 <strong>"{{ title }}"</strong> 吗？{% endblocktrans %}</p>
+            <p class="text-muted">{% trans "此操作会将文章移至回收站，您稍后可以从回收站恢复。" %}</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="deletion_reason">{% trans "删除原因（可选）" %}</label>
+                    <textarea class="form-control" id="deletion_reason"
+                              name="deletion_reason" rows="3"
+                              placeholder="{% trans '例如：内容过时、错误信息等' %}"></textarea>
+                </div>
+
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'article_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> {% trans "取消" %}
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> {% trans "确认删除" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5">
+        <div class="mb-3 mb-md-0">
+            <h1 class="fw-bold text-klein">
+                <i class="fas fa-trash-alt me-2"></i>{% trans "回收站" %}
+            </h1>
+            <p class="text-muted mb-0">{% blocktrans count counter=page_obj.paginator.count %}{{ counter }} 篇已删除文章{% plural %}{{ counter }} 篇已删除文章{% endblocktrans %}</p>
+        </div>
+
+        <div class="d-flex">
+            <a href="{% url 'empty_trash' %}" class="btn btn-danger me-2">
+                <i class="fas fa-broom me-1"></i> {% trans "清空回收站" %}
+            </a>
+            <a href="{% url 'article_list' %}" class="btn btn-outline-klein">
+                <i class="fas fa-arrow-left me-1"></i> {% trans "返回文章" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- 搜索区域 -->
+    <div class="card animate-fade mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control border-start-0" name="q"
+                               placeholder="{% trans '搜索回收站文章...' %}" value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-outline-klein w-100">
+                        <i class="fas fa-filter me-1"></i> {% trans "搜索" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if page_obj %}
+        <div class="list-group animate-fade">
+            {% for article in page_obj %}
+            <div class="list-group-item">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+                    <div class="flex-grow-1 mb-3 mb-lg-0">
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0 fw-bold">{{ article.title }}</h5>
+                            <span class="badge bg-light text-danger ms-3">
+                                <i class="fas fa-trash me-1"></i>{% trans "已删除" %}
+                            </span>
+                        </div>
+
+                        <div class="mb-2">
+                            <span class="badge bg-light text-muted me-2">
+                                <i class="fas fa-user me-1"></i>{{ article.author.username }}
+                            </span>
+                            <span class="badge bg-light text-muted">
+                                <i class="far fa-clock me-1"></i>{{ article.deleted_at|date:"Y-m-d H:i" }}
+                            </span>
+                        </div>
+
+                        <div class="text-muted small">
+                            {% if article.deletion_reason %}
+                                <p class="mb-1"><i class="fas fa-comment me-1"></i>{% trans "删除原因" %}: {{ article.deletion_reason }}</p>
+                            {% endif %}
+                            <p class="mb-0"><i class="fas fa-history me-1"></i>{% blocktrans with time=article.deleted_at|timesince %}{{ time }}前删除{% endblocktrans %}</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-shrink-0">
+                        <a href="{% url 'restore_article' article.pk %}" class="btn btn-sm btn-success me-2" data-bs-toggle="tooltip" title="{% trans '恢复文章' %}">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                        <a href="{% url 'permanent_delete' article.pk %}" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="{% trans '永久删除' %}">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 分页控件 -->
+        {% if is_paginated %}
+        <nav class="mt-4 animate-fade">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&q={{ search_query }}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query }}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        <!-- 回收站提示 -->
+        <div class="card mt-4 bg-light-klein border-klein animate-fade">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-2x text-klein me-3"></i>
+                    <div>
+                        <h5 class="mb-1 text-klein">{% trans "回收站提示" %}</h5>
+                        <p class="mb-0">{% trans "删除的文章将在30天后自动永久清除，请及时处理" %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- 空回收站状态 -->
+        <div class="card animate-fade mt-5">
+            <div class="card-body text-center py-5">
+                <div class="empty-state-icon mb-4">
+                    <i class="fas fa-trash-alt fa-4x text-klein-light"></i>
+                </div>
+                <h4 class="text-klein">{% trans "回收站是空的" %}</h4>
+                <p class="text-muted mb-4">{% trans "您删除的文章将显示在这里" %}</p>
+                <a href="{% url 'article_list' %}" class="btn btn-outline-klein">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "返回文章列表" %}
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .bg-light-klein {
+        background-color: rgba(0, 47, 167, 0.05);
+    }
+
+    .border-klein {
+        border: 1px solid rgba(0, 47, 167, 0.15);
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-klein {
+        color: var(--klein-blue);
+    }
+
+    .text-klein-light {
+        color: var(--klein-blue-light);
+    }
+
+    .btn-outline-klein {
+        color: var(--klein-blue);
+        border-color: var(--klein-blue);
+    }
+
+    .btn-outline-klein:hover {
+        background: var(--klein-blue);
+        color: white;
+    }
+
+    .empty-state-icon {
+        opacity: 0.2;
+        transition: all 0.5s ease;
+    }
+
+    .empty-state-icon:hover {
+        opacity: 0.3;
+        transform: scale(1.05);
+    }
+
+    .animate-fade {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
